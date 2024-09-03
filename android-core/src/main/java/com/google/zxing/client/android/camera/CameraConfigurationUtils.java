@@ -39,6 +39,8 @@ public final class CameraConfigurationUtils {
 
   private static final String TAG = "CameraConfiguration";
 
+  private static final String FOCUS_MODE = "focus mode";
+
   private static final Pattern SEMICOLON = Pattern.compile(";");
 
   private static final int MIN_PREVIEW_PIXELS = 480 * 320; // normal screen
@@ -60,11 +62,11 @@ public final class CameraConfigurationUtils {
     String focusMode = null;
     if (autoFocus) {
       if (safeMode || disableContinuous) {
-        focusMode = findSettableValue("focus mode",
+        focusMode = findSettableValue(FOCUS_MODE,
                                        supportedFocusModes,
                                        Camera.Parameters.FOCUS_MODE_AUTO);
       } else {
-        focusMode = findSettableValue("focus mode",
+        focusMode = findSettableValue(FOCUS_MODE,
                                       supportedFocusModes,
                                       Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE,
                                       Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO,
@@ -73,7 +75,7 @@ public final class CameraConfigurationUtils {
     }
     // Maybe selected auto-focus but not available, so fall through here:
     if (!safeMode && focusMode == null) {
-      focusMode = findSettableValue("focus mode",
+      focusMode = findSettableValue(FOCUS_MODE,
                                     supportedFocusModes,
                                     Camera.Parameters.FOCUS_MODE_MACRO,
                                     Camera.Parameters.FOCUS_MODE_EDOF);
@@ -273,22 +275,8 @@ public final class CameraConfigurationUtils {
   public static Point findBestPreviewSizeValue(Camera.Parameters parameters, Point screenResolution) {
 
     List<Camera.Size> rawSupportedSizes = parameters.getSupportedPreviewSizes();
-    if (rawSupportedSizes == null) {
-      Log.w(TAG, "Device returned no supported preview sizes; using default");
-      Camera.Size defaultSize = parameters.getPreviewSize();
-      if (defaultSize == null) {
-        throw new IllegalStateException("Parameters contained no preview size!");
-      }
-      return new Point(defaultSize.width, defaultSize.height);
-    }
-
-    if (Log.isLoggable(TAG, Log.INFO)) {
-      StringBuilder previewSizesString = new StringBuilder();
-      for (Camera.Size size : rawSupportedSizes) {
-        previewSizesString.append(size.width).append('x').append(size.height).append(' ');
-      }
-      Log.i(TAG, "Supported preview sizes: " + previewSizesString);
-    }
+    Point defaultSize1 = getValidatedPoint(parameters, rawSupportedSizes);
+    if (defaultSize1 != null) return defaultSize1;
 
     double screenAspectRatio = screenResolution.x / (double) screenResolution.y;
 
@@ -325,6 +313,26 @@ public final class CameraConfigurationUtils {
       }
     }
 
+    Point largestSize = getLargestSize(maxResPreviewSize);
+    if (largestSize != null) return largestSize;
+
+    Camera.Size defaultPreview = getSize(parameters);
+    
+    Point defaultSize = new Point(defaultPreview.width, defaultPreview.height);
+    Log.i(TAG, "No suitable preview sizes, using default: " + defaultSize);
+    return defaultSize;
+  }
+
+  private static Camera.Size getSize(Camera.Parameters parameters) throws IllegalStateException {
+    // If there is nothing at all suitable, return current preview size
+    Camera.Size defaultPreview = parameters.getPreviewSize();
+    if (defaultPreview == null) {
+      throw new IllegalStateException("Parameters contained no preview size!");
+    }
+    return defaultPreview;
+  }
+
+  private static Point getLargestSize(Camera.Size maxResPreviewSize) {
     // If no exact match, use largest preview size. This was not a great idea on older devices because
     // of the additional computation needed. We're likely to get here on newer Android 4+ devices, where
     // the CPU is much more powerful.
@@ -333,16 +341,18 @@ public final class CameraConfigurationUtils {
       Log.i(TAG, "Using largest suitable preview size: " + largestSize);
       return largestSize;
     }
-
-    // If there is nothing at all suitable, return current preview size
-    Camera.Size defaultPreview = parameters.getPreviewSize();
-    if (defaultPreview == null) {
-      throw new IllegalStateException("Parameters contained no preview size!");
-    }
-    Point defaultSize = new Point(defaultPreview.width, defaultPreview.height);
-    Log.i(TAG, "No suitable preview sizes, using default: " + defaultSize);
-    return defaultSize;
+    return null;
   }
+
+  private static Point getValidatedPoint(Camera.Parameters parameters, List<Camera.Size> rawSupportedSizes) throws IllegalStateException {
+    if (rawSupportedSizes == null) {
+      Log.w(TAG, "Device returned no supported preview sizes; using default");
+      Camera.Size defaultSize = parameters.getPreviewSize();
+      if (defaultSize == null) {
+        throw new IllegalStateException("Parameters contained no preview size!");
+      }
+      return new Point(defaultSize.width, defaultSize.height);
+    }
 
   private static String findSettableValue(String name,
                                           Collection<String> supportedValues,
