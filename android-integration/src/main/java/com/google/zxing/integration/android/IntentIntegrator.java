@@ -122,22 +122,23 @@ public class IntentIntegrator {
   private static final String BSPLUS_PACKAGE = "com.srowen.bs.android";
 
   // supported barcode formats
-  public static final Collection<String> PRODUCT_CODE_TYPES = list("UPC_A", "UPC_E", "EAN_8", "EAN_13", "RSS_14");
+  public static final Collection<String> PRODUCT_CODE_TYPES =
+    {"UPC_A", "UPC_E", "EAN_8", "EAN_13", "RSS_14"};
   public static final Collection<String> ONE_D_CODE_TYPES =
-      list("UPC_A", "UPC_E", "EAN_8", "EAN_13", "CODE_39", "CODE_93", "CODE_128",
-           "ITF", "RSS_14", "RSS_EXPANDED");
+    {"UPC_A", "UPC_E", "EAN_8", "EAN_13", "CODE_39", "CODE_93", "CODE_128",
+           "ITF", "RSS_14", "RSS_EXPANDED"};
   public static final Collection<String> QR_CODE_TYPES = Collections.singleton("QR_CODE");
   public static final Collection<String> DATA_MATRIX_TYPES = Collections.singleton("DATA_MATRIX");
 
   public static final Collection<String> ALL_CODE_TYPES = null;
 
   public static final List<String> TARGET_BARCODE_SCANNER_ONLY = Collections.singletonList(BS_PACKAGE);
-  public static final List<String> TARGET_ALL_KNOWN = list(
-          BSPLUS_PACKAGE,             // Barcode Scanner+
-          BSPLUS_PACKAGE + ".simple", // Barcode Scanner+ Simple
-          BS_PACKAGE                  // Barcode Scanner
-          // What else supports this intent?
-      );
+  public static final List<String> TARGET_ALL_KNOWN = {
+    BSPLUS_PACKAGE,             // Barcode Scanner+
+    BSPLUS_PACKAGE + ".simple", // Barcode Scanner+ Simple
+    BS_PACKAGE                  // Barcode Scanner
+    // What else supports this intent?
+  };
 
   // Should be FLAG_ACTIVITY_NEW_DOCUMENT in API 21+.
   // Defined once here because the current value is deprecated, so generates just one warning
